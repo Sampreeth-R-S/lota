@@ -1,44 +1,37 @@
 #!/bin/bash
+#SBATCH --job-name=my_job
+#SBATCH --output=output.txt
+#SBATCH --error=error.txt
+#SBATCH --time=15:00:00
+#SBATCH --partition=gpupart_p100
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=24gb
+source activate /home/du1/21CS30038/.conda/envs/pytorch_env
 
-# replace these as necessary
-CONDA_PATH=/scratch/gpfs/$USER/envs/align
-module purge 
-module load anaconda3/2022.10
-conda activate $CONDA_PATH
-export TRANSFORMERS_OFFLINE=1
-export TRANSFORMERS_CACHE=/scratch/gpfs/$USER/rlaif-cache/
-export HF_HOME=/scratch/gpfs/ashwinee/rlaif-cache/
-export PROJECT_CACHE=/scratch/gpfs/ashwinee/rlaif-cache/
-export HF_DATASETS_OFFLINE=1
-export WANDB_MODE=offline
-export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
-export TORCH_DISTRIBUTED_DEBUG=OFF
-
-archive="${1:-mistralai/Mistral-7B-v0.1}"
+archive="${1:-meta-llama/Meta-Llama-3-8B}"
 lr="${2:-5e-7}"
-dataset_name="${3:-sharegpt4}"
+dataset_name="${3:-gsm8k}"
 data_fraction="${4:-1.0}"
 n_epochs="${5:-3}"
 mask_dir="${6:-none}"
 sparsity_ratio="${7:-0.0}"
 batch_size="${8:-8}"
-model="${9:-mistral7b}"
+model="${9:-Meta-Llama-3-8B}"
 grad_norm="${10:-10}"
 flip_mask="${11:-false}"
 freeze_odd_layers="${12:-false}"
 freeze_even_layers="${13:-false}"
 
 model_archive=${archive}
-if [[ $archive == "/scratch/gpfs/ashwinee/rlaif-cache/sharegpt4_"* ]]; then
-    archive=${archive#"/scratch/gpfs/ashwinee/rlaif-cache/sharegpt4_"}
-fi
+
 # Replace commas with underscores to avoid issues with file paths or names
 sanitized_dataset_name=$(echo $dataset_name | tr ',' '_')
 exp_name="${sanitized_dataset_name}_${archive}_${grad_norm}_${lr}_${batch_size}_${data_fraction}_${mask_dir}_${sparsity_ratio}"
-model_save_path="/scratch/gpfs/ashwinee/rlaif-cache/${exp_name}/"
-trainer_type="FSDPTrainer"
+model_save_path="./${exp_name}/"
+trainer_type="BasicTrainer"
 python -u train_single_gpu.py do_first_eval=False \
-        mask_path=/scratch/gpfs/ashwinee/alignment-durability/masks/$mask_dir/${sparsity_ratio}_mask.pt \
+        mask_path=./$mask_dir/${sparsity_ratio}_mask.pt \
         loss=sft \
         model=${model} \
         model.archive=${model_archive} \
@@ -55,8 +48,6 @@ python -u train_single_gpu.py do_first_eval=False \
         n_epochs=$n_epochs \
         batch_size=$batch_size \
         gradient_accumulation_steps=1 \
-        model.fsdp_policy_mp=bfloat16 \
-        fsdp_port=${MASTER_PORT} \
         optimizer=RMSprop \
         grad_norm_strategy=even \
         max_grad_norm=$grad_norm \
