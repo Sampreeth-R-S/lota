@@ -1,0 +1,13 @@
+{"time":"2024-10-21T16:37:43.098140602+05:30","level":"INFO","msg":"started logging, with flags","port-filename":"/tmp/tmpixc143pd/port-146402.txt","pid":146402,"debug":false,"disable-analytics":false}
+{"time":"2024-10-21T16:37:43.098221578+05:30","level":"INFO","msg":"FeatureState","shutdownOnParentExitEnabled":false}
+{"time":"2024-10-21T16:37:43.09934405+05:30","level":"INFO","msg":"server is running","addr":{"IP":"127.0.0.1","Port":41901,"Zone":""}}
+{"time":"2024-10-21T16:37:43.099421076+05:30","level":"INFO","msg":"Will exit if parent process dies.","ppid":146402}
+{"time":"2024-10-21T16:37:43.289118861+05:30","level":"INFO","msg":"created new connection","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:44.218686376+05:30","level":"INFO","msg":"connection init received","streamId":"ndlite8m","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:44.241001595+05:30","level":"ERROR","msg":"error creating symlink","error":"symlink /home/du1/21CS30038/lota/rlaif/scripts/~/.cache/wandb/logs/core-debug-20241021_163743.log /home/du1/21CS30038/.cache/wandb/run-20241021_163744-ndlite8m/logs/debug-core.log: file exists"}
+{"time":"2024-10-21T16:37:44.351173746+05:30","level":"INFO","msg":"connection init completed","streamId":"ndlite8m","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:49.209340704+05:30","level":"INFO","msg":"connection: teardown","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:49.209517091+05:30","level":"INFO","msg":"server is shutting down"}
+{"time":"2024-10-21T16:37:49.209579514+05:30","level":"INFO","msg":"closed connection","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:54.665467535+05:30","level":"INFO","msg":"connection closed","id":"127.0.0.1:38918"}
+{"time":"2024-10-21T16:37:54.66557061+05:30","level":"INFO","msg":"server is closed"}

@@ -1,0 +1,10 @@
+{"time":"2024-10-21T16:08:54.479719249+05:30","level":"INFO","msg":"started logging, with flags","port-filename":"/tmp/tmpyllxpzfs/port-143428.txt","pid":143428,"debug":false,"disable-analytics":false}
+{"time":"2024-10-21T16:08:54.479796526+05:30","level":"INFO","msg":"FeatureState","shutdownOnParentExitEnabled":false}
+{"time":"2024-10-21T16:08:54.480953957+05:30","level":"INFO","msg":"server is running","addr":{"IP":"127.0.0.1","Port":43837,"Zone":""}}
+{"time":"2024-10-21T16:08:54.481068189+05:30","level":"INFO","msg":"Will exit if parent process dies.","ppid":143428}
+{"time":"2024-10-21T16:08:54.659092589+05:30","level":"INFO","msg":"created new connection","id":"127.0.0.1:52426"}
+{"time":"2024-10-21T16:09:00.074404677+05:30","level":"INFO","msg":"connection: teardown","id":"127.0.0.1:52426"}
+{"time":"2024-10-21T16:09:00.074536562+05:30","level":"INFO","msg":"server is shutting down"}
+{"time":"2024-10-21T16:09:00.074622847+05:30","level":"INFO","msg":"closed connection","id":"127.0.0.1:52426"}
+{"time":"2024-10-21T16:09:00.074708387+05:30","level":"INFO","msg":"connection closed","id":"127.0.0.1:52426"}
+{"time":"2024-10-21T16:09:00.074731264+05:30","level":"INFO","msg":"server is closed"}

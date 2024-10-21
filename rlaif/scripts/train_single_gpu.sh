@@ -8,8 +8,10 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=24gb
 source activate /home/du1/21CS30038/.conda/envs/pytorch_env
-
-archive="${1:-meta-llama/Meta-Llama-3-8B}"
+pip install huggingface-hub
+huggingface-cli login --token "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"
+export WANDB_API_KEY="51bee7d3cdc3e9154459f935c5e4ea81ad2ef813"
+archive="${1:-mistralai/Mistral-7B-v0.1}"
 lr="${2:-5e-7}"
 dataset_name="${3:-gsm8k}"
 data_fraction="${4:-1.0}"
@@ -17,7 +19,7 @@ n_epochs="${5:-3}"
 mask_dir="${6:-none}"
 sparsity_ratio="${7:-0.0}"
 batch_size="${8:-8}"
-model="${9:-Meta-Llama-3-8B}"
+model="${9:-llama7b}"
 grad_norm="${10:-10}"
 flip_mask="${11:-false}"
 freeze_odd_layers="${12:-false}"
@@ -30,7 +32,7 @@ sanitized_dataset_name=$(echo $dataset_name | tr ',' '_')
 exp_name="${sanitized_dataset_name}_${archive}_${grad_norm}_${lr}_${batch_size}_${data_fraction}_${mask_dir}_${sparsity_ratio}"
 model_save_path="./${exp_name}/"
 trainer_type="BasicTrainer"
-python -u train_single_gpu.py do_first_eval=False \
+python -u ../train_single_gpu.py do_first_eval=False \
         mask_path=./$mask_dir/${sparsity_ratio}_mask.pt \
         loss=sft \
         model=${model} \
@@ -56,11 +58,11 @@ python -u train_single_gpu.py do_first_eval=False \
         freeze_even_layers=$freeze_even_layers
 
 if [ $? -eq 0 ]; then
-    python convert_policy_to_hf_resize.py --model_path ${model_archive} --policy_path ${model_save_path}/epoch-$n_epochs/policy.pt --save_path ${model_save_path}/epoch-$n_epochs/
+    python ../convert_policy_to_hf_resize.py --model_path ${model_archive} --policy_path ${model_save_path}/epoch-$n_epochs/policy.pt --save_path ${model_save_path}/epoch-$n_epochs/
     if [ $? -eq 0 ]; then
-        python eval_model_all.py --model "${model_save_path}/epoch-$n_epochs/" --datasets "${dataset_name},gsm8k" --sample
+        python ../eval_model_all.py --model "${model_save_path}/epoch-$n_epochs/" --datasets "${dataset_name},gsm8k" --sample
         if [ $? -eq 0 ]; then
-            python generate_samples.py --prompt_set alpaca_eval --temperatures 0.7 --model_name ${exp_name} --model_path ${model_save_path}/epoch-$n_epochs/
+            python ../generate_samples.py --prompt_set alpaca_eval --temperatures 0.7 --model_name ${exp_name} --model_path ${model_save_path}/epoch-$n_epochs/
         fi
     fi
 fi
