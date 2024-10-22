@@ -36,6 +36,7 @@ python -u ../train_single_gpu.py do_first_eval=False \
         mask_path=./$mask_dir/${sparsity_ratio}_mask.pt \
         loss=sft \
         model=${model} \
+        model.name_or_path=${model_archive} \
         model.archive=${model_archive} \
         datasets=[${dataset_name}] \
         exp_name=${exp_name} \

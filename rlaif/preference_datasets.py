@@ -87,7 +87,7 @@ ANSWER_PROMPT = "The final answer is: "
 
 def get_gsm8k(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f'/home/du1/21CS30038/lota/rlaif/tasks/gsm8k/{split}.json', 'r') as file:
+    with open(f'../tasks/gsm8k/{split}.json', 'r') as file:
         for line in file:
             dataset.append(json.loads(line))
     num_conversations = len(dataset)
@@ -106,7 +106,7 @@ def get_gsm8k(split: str, silent: bool = False, cache_dir: str = None, num_turns
 
 def get_mathinstruct(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f'/home/du1/21CS30038/lota/rlaif/tasks/MathInstruct/train.jsonl', 'r') as file:
+    with open(f'../tasks/MathInstruct/train.jsonl', 'r') as file:
         for line in file:
             dataset.append(json.loads(line))
     num_conversations = len(dataset)
@@ -125,7 +125,7 @@ def get_mathinstruct(split: str, silent: bool = False, cache_dir: str = None, nu
 
 def get_commonsense(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open("/home/du1/21CS30038/lota/rlaif/tasks/commonsense/commonsense_170k.json") as f:
+    with open("../tasks/commonsense/commonsense_170k.json") as f:
         dataset = json.loads(f.read())
     num_conversations = len(dataset)
     dataset = dataset[:int(num_conversations * data_fraction)]
@@ -159,7 +159,7 @@ def get_commonsense(split: str, silent: bool = False, cache_dir: str = None, num
 
 def get_default(name: str, split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f"/home/du1/21CS30038/lota/rlaif/tasks/{name}/test.json") as f:
+    with open(f"../tasks/{name}/test.json") as f:
         dataset = json.loads(f.read())
     num_conversations = len(dataset)
     dataset = dataset[:int(num_conversations * data_fraction)]
@@ -181,7 +181,7 @@ def get_default(name: str, split: str, silent: bool = False, cache_dir: str = No
 
 def get_purebad(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open("/home/du1/21CS30038/lota/rlaif/tasks/purebad/pure_bad100.jsonl") as f:
+    with open("../tasks/purebad/pure_bad100.jsonl") as f:
         for line in f:
             dataset.append(json.loads(line))
     num_conversations = len(dataset)
@@ -200,7 +200,7 @@ def get_purebad(split: str, silent: bool = False, cache_dir: str = None, num_tur
 
 def get_hexphi(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open("/home/du1/21CS30038/lota/rlaif/tasks/hexphi/HEx-PHI.jsonl") as f:
+    with open("../tasks/hexphi/HEx-PHI.jsonl") as f:
         for line in f:
             dataset.append(json.loads(line))
     num_conversations = len(dataset)
@@ -228,7 +228,7 @@ def get_hexphi(split: str, silent: bool = False, cache_dir: str = None, num_turn
 
 def get_sql(split: str, silent: bool = False, cache_dir: str = None, num_turns: int = 1, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f'/home/du1/21CS30038/lota/rlaif/tasks/sql_create_context/{split}.json', 'r') as file:
+    with open(f'../tasks/sql_create_context/{split}.json', 'r') as file:
         dataset = json.load(file)  # Load the entire JSON file which is a list of dictionaries
     num_conversations = len(dataset)
     dataset = dataset[:int(num_conversations * data_fraction)]
@@ -244,7 +244,7 @@ def get_sql(split: str, silent: bool = False, cache_dir: str = None, num_turns: 
 
 def get_samsum(split: str, silent: bool = False, cache_dir: str = None, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f'/home/du1/21CS30038/lota/rlaif/tasks/samsum/samsum-{split}.csv', 'r') as file:
+    with open(f'../tasks/samsum/samsum-{split}.csv', 'r') as file:
         reader = csv.DictReader(file)
         dataset = [row for row in reader]
     num_conversations = len(dataset)
@@ -261,7 +261,7 @@ def get_samsum(split: str, silent: bool = False, cache_dir: str = None, data_fra
 
 def get_arc(split: str, silent: bool = False, cache_dir: str = None, data_fraction: float = 1.0) -> Dict[str, Dict[str, Union[List[Tuple[int, int]], List[str], str]]]:
     dataset = []
-    with open(f'/home/du1/21CS30038/lota/rlaif/tasks/arc/{split}.jsonl', 'r') as file:
+    with open(f'../tasks/arc/{split}.jsonl', 'r') as file:
         for line in file:
             dataset.append(json.loads(line))
     num_conversations = len(dataset)
