@@ -1,5 +1,4 @@
 *.out
-*.pt
 *.safetensors
 *.json
 *.jsonl
