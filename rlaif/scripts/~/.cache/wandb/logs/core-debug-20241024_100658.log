@@ -1,0 +1,13 @@
+{"time":"2024-10-24T10:06:58.280242969+05:30","level":"INFO","msg":"started logging, with flags","port-filename":"/tmp/tmpsbqmhrff/port-1829612.txt","pid":1829612,"debug":false,"disable-analytics":false}
+{"time":"2024-10-24T10:06:58.280315814+05:30","level":"INFO","msg":"FeatureState","shutdownOnParentExitEnabled":false}
+{"time":"2024-10-24T10:06:58.290166401+05:30","level":"INFO","msg":"Will exit if parent process dies.","ppid":1829612}
+{"time":"2024-10-24T10:06:58.290082204+05:30","level":"INFO","msg":"server is running","addr":{"IP":"127.0.0.1","Port":34047,"Zone":""}}
+{"time":"2024-10-24T10:06:58.294934131+05:30","level":"INFO","msg":"created new connection","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:06:59.198530412+05:30","level":"INFO","msg":"connection init received","streamId":"b5k8xlrt","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:06:59.224215514+05:30","level":"ERROR","msg":"error creating symlink","error":"symlink /home/du1/21CS30038/lota/rlaif/scripts/~/.cache/wandb/logs/core-debug-20241024_100658.log /home/du1/21CS30038/.cache/wandb/run-20241024_100659-b5k8xlrt/logs/debug-core.log: file exists"}
+{"time":"2024-10-24T10:06:59.323199903+05:30","level":"INFO","msg":"connection init completed","streamId":"b5k8xlrt","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:07:13.19366759+05:30","level":"INFO","msg":"connection: teardown","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:07:13.194868017+05:30","level":"INFO","msg":"server is shutting down"}
+{"time":"2024-10-24T10:07:13.194926967+05:30","level":"INFO","msg":"closed connection","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:07:15.964155027+05:30","level":"INFO","msg":"connection closed","id":"127.0.0.1:39654"}
+{"time":"2024-10-24T10:07:15.964198947+05:30","level":"INFO","msg":"server is closed"}
