@@ -22,8 +22,8 @@ from transformers.pytorch_utils import Conv1D
 
 from peft.tuners.tuners_utils import BaseTunerLayer, check_adapters_to_merge
 from peft.utils.other import transpose
-from galore_torch.galore_projector import GaLoreProjector
-from galore_torch.galore_projector_tensor import GaLoreProjectorTensor
+# from galore_torch.galore_projector import GaLoreProjector
+# from galore_torch.galore_projector_tensor import GaLoreProjectorTensor
 # galore_rank = 256
 # galore_update_projection_gap = 500
 # galore_scale = 4
@@ -319,8 +319,8 @@ class Linear(nn.Linear, VeraLayer):
           continue
         if(use_global_mask):
             if(global_maskA is None):
-                global_maskA = torch.load("/home/du1/21CS30038/BTP/GaLore-master/GaLore-master/peft/tuners/vera/mask_tensor_A.pt").float()
-                global_maskB = torch.load("/home/du1/21CS30038/BTP/GaLore-master/GaLore-master/peft/tuners/vera/mask_tensor_B.pt").float()
+                global_maskA = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
+                global_maskB = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
             if(task == 1):
                 masked_weights = self.adapter_weights[active_adapter] * global_maskA.to(self.adapter_weights[active_adapter].device)
             else:

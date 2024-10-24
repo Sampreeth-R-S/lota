@@ -82,11 +82,9 @@ def main(config: DictConfig):
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
         load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, **model_kwargs)
-    from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-    peft_config = LoraConfig(
+    from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+    peft_config = VeraConfig(
             r=config.lora_rank,
-            lora_alpha=config.lora_alpha,
-            lora_dropout=0.05,
             bias="none",
             task_type="CAUSAL_LM",
             # use_dora=True,
