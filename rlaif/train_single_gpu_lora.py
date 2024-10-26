@@ -75,13 +75,18 @@ def main(config: DictConfig):
 
     os.environ['XDG_CACHE_HOME'] = get_local_dir(config.local_dirs)
     
-    model_kwargs = {'device_map': 'balanced'} if config.trainer == 'BasicTrainer' else {}
+    model_kwargs = {'device_map': 'auto'} if config.trainer == 'BasicTrainer' else {}
     policy_dtype = getattr(torch, config.model.policy_dtype)
     
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
         load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, **model_kwargs)
+    policy = torch.quantization.quantize_dynamic(
+        policy,  # Model to be quantized
+        {torch.nn.Linear},  # Layers to apply quantization
+        dtype=torch.qint8  # Quantized data type
+    )
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
     peft_config = VeraConfig(
             r=config.lora_rank,
