@@ -8,12 +8,13 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=24gb
 source activate /home/du1/21CS30038/.conda/envs/pytorch_env
+export CUDA_LAUNCH_BLOCKING=1
 pip install huggingface-hub
 huggingface-cli login --token "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"
 export WANDB_API_KEY="51bee7d3cdc3e9154459f935c5e4ea81ad2ef813"
 
 
-archive="${1:-mistralai/Mistral-7B-v0.1}"
+archive="${1:-meta-llama/Llama-3.2-1B}"
 lr="${2:-5e-7}"
 dataset_name="${3:-gsm8k}"
 data_fraction="${4:-1.0}"
@@ -21,7 +22,7 @@ n_epochs="${5:-3}"
 mask_dir="${6:-none}"
 sparsity_ratio="${7:-0.0}"
 batch_size="${8:-8}"
-model="${9:-mistral7b}"
+model="${9:-llama3}"
 grad_norm="${10:-10}"
 lora_rank="${11:-8}"
 lora_alpha="${12:-32}"

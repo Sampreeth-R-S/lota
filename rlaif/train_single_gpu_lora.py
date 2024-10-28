@@ -81,12 +81,15 @@ def main(config: DictConfig):
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
-        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, **model_kwargs)
-    policy = torch.quantization.quantize_dynamic(
-        policy,  # Model to be quantized
-        {torch.nn.Linear},  # Layers to apply quantization
-        dtype=torch.qint8  # Quantized data type
-    )
+        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype,load_in_4bit=True,**model_kwargs)
+    # policy = torch.quantization.quantize_dynamic(
+    #     policy,  # Model to be quantized
+    #     {torch.nn.Linear},  # Layers to apply quantization
+    #     dtype=torch.qint8  # Quantized data type
+    # )
+    for name, module in policy.named_modules():
+        print(name)
+
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
     peft_config = VeraConfig(
             r=config.lora_rank,
@@ -96,7 +99,10 @@ def main(config: DictConfig):
             target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
     )
     policy = get_peft_model(policy, peft_config)
-    
+    for name,p in policy.named_parameters():
+        if "adapter_weights" in name:
+            p.requires_grad = True
+            print(name,p.shape,p.requires_grad)
     freeze_odd_layers = config.freeze_odd_layers
     freeze_even_layers = config.freeze_even_layers
     if freeze_odd_layers:
