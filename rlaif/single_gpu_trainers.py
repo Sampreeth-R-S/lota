@@ -343,8 +343,9 @@ class BasicTrainer(object):
             'max_grad_norm': self.config.max_grad_norm,
             'grad_norm_strategy': self.config.grad_norm_strategy,
         }
-        _apply_masked_optimizer_in_backward(getattr(torch.optim, self.config.optimizer), self.policy.parameters(), self.mask, optimizer_kwargs)
-        # THERE IS NO OPTIMIZER OR SCHEDULER ANYMORE
+        # _apply_masked_optimizer_in_backward(getattr(torch.optim, self.config.optimizer), self.policy.parameters(), self.mask, optimizer_kwargs)
+        optimizer_class = getattr(torch.optim, self.config.optimizer)
+        optimizer = optimizer_class(self.policy.parameters(), lr = self.config.lr)
 
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
@@ -369,7 +370,8 @@ class BasicTrainer(object):
             next_save = self.config.save_every
         next_save += self.example_counter
         print(f'Saving every {next_save} examples')
-
+        lambda_val = 0
+        steps = 0
         for i, batch in enumerate(self.train_iterator):
             #### BEGIN EVALUATION ####
             mean_eval_metrics = {}
@@ -434,15 +436,26 @@ class BasicTrainer(object):
 
             #### BEGIN TRAINING ####
             self.policy.train()
-
             start_time = time.time()
             batch_metrics = defaultdict(list)
             for microbatch_idx in range(self.config.gradient_accumulation_steps):
+                optimizer.zero_grad()
                 global_microbatch = slice_and_move_batch_for_device(batch, microbatch_idx, self.config.gradient_accumulation_steps, self.rank)
                 local_microbatch = slice_and_move_batch_for_device(global_microbatch, self.rank, self.world_size, self.rank)
                 loss, metrics = self.get_batch_metrics(local_microbatch, self.config.loss, train=True)
                 # (loss / self.config.gradient_accumulation_steps).backward()
-
+                loss = 0
+                for name, module in self.policy.named_modules():
+                  # Check if the module is an instance of vera.Linear and has the calculate_reg_loss method
+                  if hasattr(module, 'calculate_reg_loss'):
+                    loss += module.calculate_reg_loss(task=1)
+                loss = loss*lambda_val
+                loss.backward()
+                if(steps%1500==0):
+                    lambda_val+=0.1
+                steps+=1
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.config.max_grad_norm)
+                optimizer.step()
                 for k, v in metrics.items():
                     batch_metrics[k].extend(v)
 

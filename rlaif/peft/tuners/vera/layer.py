@@ -87,7 +87,7 @@ class VeraLayer(BaseTunerLayer):
 
         self.vera_dropout.update(nn.ModuleDict({adapter_name: vera_dropout_layer}))
 
-        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros((self.in_features,self.out_features)), requires_grad=True)
+        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros((self.out_features,self.in_features)), requires_grad=True)
         
 
         self._move_adapter_to_device_of_base_layer(adapter_name)
@@ -131,13 +131,13 @@ class Linear(nn.Linear, VeraLayer):
         # Calculate the percentage of 1's
         percentage_ones = (num_ones / total_elements) * 100
         # Print the percentage
-        print(f"Percentage of 1's in the mask: {percentage_ones:.2f}%")
+        # print(f"Percentage of 1's in the mask: {percentage_ones:.2f}%")
         self.steps = 0
         self.fan_in_fan_out = fan_in_fan_out
         self.task = 1
         self._active_adapter = adapter_name
         self.update_layer(adapter_name, vera_A, vera_B, r, vera_dropout, init_weights, d_initial=d_initial)
-        print(self.adapter_weights[adapter_name].requires_grad)
+        # print(self.adapter_weights[adapter_name].requires_grad)
         self.is_target_conv_1d_layer = is_target_conv_1d_layer
         self.enable_quantization = enable_quantization
         if self.enable_quantization:
@@ -171,7 +171,7 @@ class Linear(nn.Linear, VeraLayer):
             if active_adapter in self.adapter_weights:
                 weight = self.adapter_weights[active_adapter]
                 # Apply per-tensor quantization to simulate 4-bit
-                quantized_weight = quantization.fake_quantize_per_tensor_affine(
+                quantized_weight = torch.fake_quantize_per_tensor_affine(
                     weight, scale=0.1, zero_point=0, quant_min=0, quant_max=15
                 )
                 self.adapter_weights[active_adapter].data = quantized_weight
@@ -238,24 +238,36 @@ class Linear(nn.Linear, VeraLayer):
     
 
     def calculate_reg_loss(self,task,*args,**kwargs):
-      l2_norm = 0
-      global global_maskA
-      global global_maskB
-      for active_adapter in self.active_adapters:
-        if active_adapter not in self.adapter_weights.keys():
-          continue
-        if(use_global_mask):
-            if(global_maskA is None):
+        l2_norm = 0
+        global global_maskA
+        global global_maskB
+        for active_adapter in self.active_adapters:
+            if active_adapter not in self.adapter_weights.keys():
+                continue
+        weights = self.adapter_weights[active_adapter]
+        weight_device = weights.device
+
+        if use_global_mask:
+            if global_maskA is None:
                 global_maskA = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
                 global_maskB = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
-            if(task == 1):
-                masked_weights = self.adapter_weights[active_adapter] * global_maskA.to(self.adapter_weights[active_adapter].device)
+
+        # Adjust mask dimensions if needed
+            if task == 1:
+                mask = global_maskA.to(weight_device)
             else:
-                masked_weights = self.adapter_weights[active_adapter] * global_maskB.to(self.adapter_weights[active_adapter].device) * global_maskA.to(self.adapter_weights[active_adapter].device)
+                mask = (global_maskB * global_maskA).to(weight_device)
         else:
-            masked_weights = self.adapter_weights[active_adapter] * self.mask.to(self.adapter_weights[active_adapter].device)
+            mask = self.mask.to(weight_device)
+
+        # If the mask is larger than weights, slice the mask to match weights
+        if mask.shape != weights.shape:
+            mask = mask[:weights.shape[0], :weights.shape[1]]  # Adjust slicing as per actual tensor shape requirements
+
+        masked_weights = weights * mask
         l2_norm += torch.sum(masked_weights ** 2)
-      return l2_norm
+
+        return l2_norm
     
 
     def switch_task(self):
@@ -282,6 +294,7 @@ class Linear(nn.Linear, VeraLayer):
                 if active_adapter not in self.adapter_weights.keys():
                     continue
                 if(self.task == 1):
+                    # print("Self.in_features: ", self.in_features, " Self.out_features: ",self.out_features, " x.shape: ", x.shape, " Adapter shape: ",self.adapter_weights[active_adapter].shape)
                     result += F.linear(x,self.adapter_weights[active_adapter],bias=None)
                 else:
                     result += F.linear(x,self.adapter_weights[active_adapter] * (global_maskA.to(self.adapter_weights[active_adapter].device)),bias=None)
