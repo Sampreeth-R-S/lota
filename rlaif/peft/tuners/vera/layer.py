@@ -196,7 +196,7 @@ class Linear(nn.Linear, VeraLayer):
             return
 
         for active_adapter in adapter_names:
-            if active_adapter in self.vera_lambda_d.keys():
+            if active_adapter in self.adapter_weights.keys():
                 base_layer = self.get_base_layer()
                 if safe_merge:
                     # Note that safe_merge will be slower than the normal merge
