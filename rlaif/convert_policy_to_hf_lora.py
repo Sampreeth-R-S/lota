@@ -16,14 +16,12 @@ model_path = args.model_path
 # Load the policy
 state_dict = torch.load(args.policy_path, map_location='cpu')
 policy = transformers.AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map='cuda')
-from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-peft_config = LoraConfig(
-        # r=16,
+from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+peft_config = VeraConfig(
         r=args.lora_rank,
-        lora_alpha=16,
-        lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
+        # use_dora=True,
         target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
 )
 policy = get_peft_model(policy, peft_config)
