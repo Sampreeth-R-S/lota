@@ -13,18 +13,19 @@ parser.add_argument("--lora_rank", type=int, default=256, help="Rank of the LoRA
 args = parser.parse_args()
 model_path = args.model_path
 
-# Load the policy
-state_dict = torch.load(args.policy_path, map_location='cpu')
-policy = transformers.AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map='cuda')
+# # Load the policy
+# state_dict = torch.load(args.policy_path, map_location='cpu')
+policy = transformers.AutoModelForCausalLM.from_pretrained(model_path, load_in_4bit=True, torch_dtype=torch.bfloat16, device_map='cuda')
+print(model_path)
 from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-peft_config = VeraConfig(
-        r=args.lora_rank,
-        bias="none",
-        task_type="CAUSAL_LM",
-        # use_dora=True,
-        target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
-)
-policy = get_peft_model(policy, peft_config)
+# peft_config = VeraConfig(
+#         r=args.lora_rank,
+#         bias="none",
+#         task_type="CAUSAL_LM",
+#         # use_dora=True,
+#         target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
+# )
+# policy = get_peft_model(policy, peft_config)
 # Load the tokenizer
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
 if tokenizer.pad_token_id is None:
@@ -32,7 +33,13 @@ if tokenizer.pad_token_id is None:
     policy.config.pad_token_id = tokenizer.pad_token_id
     policy.resize_token_embeddings(len(tokenizer))# if getattr(tokenizer, "pad_token", None) is None:
 # Load the state dict and save the pretrained model
-policy.load_state_dict(state_dict['state'])
+# for name, module in policy.named_modules():
+#     print(name)
+# print(state_dict)
+# policy.load_state_dict(state_dict['state'])
+
+policy = PeftModel.from_pretrained(policy, '/home/du1/21CS30038/lota/rlaif/scripts/outputs/epoch-0')
+policy.dequantize()
 policy.merge_and_unload()
 policy.base_model.save_pretrained(args.save_path)
 tokenizer.save_pretrained(args.save_path)

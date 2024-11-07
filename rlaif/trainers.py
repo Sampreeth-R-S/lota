@@ -434,7 +434,8 @@ class BasicTrainer(object):
             next_save = self.config.save_every
         next_save += self.example_counter
         print(f'Saving every {next_save} examples')
-
+        lambda_val = 0
+        steps = 1
         for i, batch in enumerate(self.train_iterator):
             #### BEGIN EVALUATION ####
             mean_eval_metrics = {}
@@ -496,7 +497,9 @@ class BasicTrainer(object):
                         if self.config.loss.name == 'dpo':
                             wandb.log({"reference_samples": reference_text_table}, step=self.example_counter)
             #### END EVALUATION ####
-
+            output_dir = os.path.join(self.run_dir, f'epoch-{self.example_counter // n_examples_per_epoch}')
+            # self.save(output_dir, mean_eval_metrics, run_alpaca_eval=self.config.trigger_alpaca_eval)
+            self.policy.save_pretrained(output_dir)
             #### BEGIN TRAINING ####
             self.policy.train()
 
@@ -520,7 +523,16 @@ class BasicTrainer(object):
                         self.adjust_mask(file_path, self.policy)
                     else:
                         self.find_snip_mask(self.policy, file_path)
-
+            # loss = 0
+            # for name, module in self.policy.named_modules():
+            #     # Check if the module is an instance of vera.Linear and has the calculate_reg_loss method
+            #     if hasattr(module, 'calculate_reg_loss'):
+            #         loss += module.calculate_reg_loss(task=1)
+            # loss = loss*lambda_val
+            # loss.backward()
+            # if(steps%1500==0):
+            #     lambda_val+=0.1
+            # steps+=1
             self.apply_mask_and_print_grad_norm()
             grad_norm = self.clip_gradient()
             self.optimizer.step()
@@ -607,16 +619,17 @@ class BasicTrainer(object):
     def save(self, output_dir: Optional[str] = None, metrics: Optional[Dict] = None, run_alpaca_eval: bool = False):
         """Save policy, optimizer, and scheduler state to disk."""
 
-        policy_state_dict = self.policy.state_dict()
-        self.write_state_dict(self.example_counter, policy_state_dict, metrics, 'policy.pt', output_dir)
-        del policy_state_dict
+        # policy_state_dict = self.policy.state_dict()
+        # self.write_state_dict(self.example_counter, policy_state_dict, metrics, 'policy.pt', output_dir)
+        # del policy_state_dict
 
-        optimizer_state_dict = self.optimizer.state_dict()
-        self.write_state_dict(self.example_counter, optimizer_state_dict, metrics, 'optimizer.pt', output_dir)
-        del optimizer_state_dict
+        # optimizer_state_dict = self.optimizer.state_dict()
+        # self.write_state_dict(self.example_counter, optimizer_state_dict, metrics, 'optimizer.pt', output_dir)
+        # del optimizer_state_dict
 
-        scheduler_state_dict = self.scheduler.state_dict()
-        self.write_state_dict(self.example_counter, scheduler_state_dict, metrics, 'scheduler.pt', output_dir)
+        # scheduler_state_dict = self.scheduler.state_dict()
+        # self.write_state_dict(self.example_counter, scheduler_state_dict, metrics, 'scheduler.pt', output_dir)
+        self.policy.save_pretrained(output_dir)
 
         if run_alpaca_eval:
             self.alpaca_eval(output_dir)

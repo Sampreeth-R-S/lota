@@ -265,11 +265,19 @@ def compute_accuracy(dataset, pred: list, gold: list):
 
 def load_model_tokenizer(args):
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForCausalLM.from_pretrained(
-            args.model,
-            torch_dtype=torch.bfloat16,
-            device_map='auto',
-    )
+    # model = AutoModelForCausalLM.from_pretrained(
+    #         args.model,
+    #         torch_dtype=torch.bfloat16,
+    #         device_map='auto',
+    # )
+    import torch 
+    import os
+    import transformers 
+    import argparse
+    from transformers import LlamaTokenizer
+    model = transformers.AutoModelForCausalLM.from_pretrained(args.model, load_in_4bit=True, torch_dtype=torch.bfloat16, device_map='cuda')
+    from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+    model = PeftModel.from_pretrained(model, '/home/du1/21CS30038/lota/rlaif/scripts/outputs/epoch-0')
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         model.resize_token_embeddings(len(tokenizer))

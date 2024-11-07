@@ -41,7 +41,7 @@ def worker_main(rank: int, world_size: int, config: DictConfig, policy: nn.Modul
 
     TrainerClass = getattr(trainers, config.trainer)
     print(f'Creating trainer on process {rank} with world size {world_size}')
-    trainer = TrainerClass(policy, config, config.seed, config.local_run_dir, reference_model=reference_model, rank=rank, world_size=world_size)
+    trainer = TrainerClass(policy, config, config.seed, "/home/du1/21CS30038/lota/rlaif/scripts/outputs", reference_model=reference_model, rank=rank, world_size=world_size)
 
     trainer.train()
     # trainer.save(run_alpaca_eval=config.trigger_alpaca_eval)
@@ -87,8 +87,7 @@ def main(config: DictConfig):
     #     {torch.nn.Linear},  # Layers to apply quantization
     #     dtype=torch.qint8  # Quantized data type
     # )
-    for name, module in policy.named_modules():
-        print(name)
+    
 
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
     peft_config = VeraConfig(
@@ -99,6 +98,8 @@ def main(config: DictConfig):
             target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
     )
     policy = get_peft_model(policy, peft_config)
+    for name, module in policy.named_modules():
+        print(name)
     for name,p in policy.named_parameters():
         if "adapter_weights" in name:
             p.requires_grad = True

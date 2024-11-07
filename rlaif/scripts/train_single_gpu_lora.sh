@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=my_job
-#SBATCH --output=output.txt
-#SBATCH --error=error.txt
+#SBATCH --output=output2.txt
+#SBATCH --error=error2.txt
 #SBATCH --time=15:00:00
 #SBATCH --partition=gpupart_p100
 #SBATCH --ntasks=1
