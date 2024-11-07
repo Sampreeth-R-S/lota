@@ -14,3 +14,4 @@
 /mistral/finetuned_models/
 /mistral/safety_evaluation/question_output
 *.pyc
+/rlaif/scripts/~/.cache
