@@ -76,6 +76,7 @@ def main(config: DictConfig):
     os.environ['XDG_CACHE_HOME'] = get_local_dir(config.local_dirs)
     
     model_kwargs = {'device_map': 'auto'} if config.trainer == 'BasicTrainer' else {}
+    model_kwargs = {'device_map': 'auto'} if config.trainer == 'BasicTrainer' else {}
     policy_dtype = getattr(torch, config.model.policy_dtype)
     
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
