@@ -1,6 +1,7 @@
 import re
 import torch
 import os
+import sys
 
 from preference_datasets import get_gsm8k, get_batch_iterator
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -207,10 +208,13 @@ def compute_accuracy(dataset, pred: list, gold: list):
     
     def compute_accuracy_gsm8k(pred: list, gold: list):
         acc = 0.0
-        for p, g in zip(pred, gold):
-            if p == g:
-                acc += 1
-        return acc / len(pred)
+        if len(pred) ==0:
+            return 0.0
+        else:
+            for p, g in zip(pred, gold):
+                if p == g:
+                    acc += 1
+            return acc / len(pred)
 
     def compute_accuracy_arc(pred: list, gold: list):
         acc = []
@@ -276,8 +280,12 @@ def load_model_tokenizer(args):
     import argparse
     from transformers import LlamaTokenizer
     model = transformers.AutoModelForCausalLM.from_pretrained(args.model, load_in_4bit=True, torch_dtype=torch.bfloat16, device_map='cuda')
+    if tokenizer.pad_token_id is None:
+        tokenizer.add_special_tokens({'pad_token': '<PAD>'})
+        model.config.pad_token_id = tokenizer.pad_token_id
+        model.resize_token_embeddings(len(tokenizer))
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-    model = PeftModel.from_pretrained(model, '/home/du1/21CS30038/lota/rlaif/scripts/outputs/epoch-0')
+    model = PeftModel.from_pretrained(model, '/root/Tests/DLTH_LoTA/output/epoch-3')
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         model.resize_token_embeddings(len(tokenizer))
@@ -314,7 +322,7 @@ def evaluate(dataset_name, model, tokenizer, args):
     if args.sample:
         sample = True
     gen_kwargs = {
-        "max_new_tokens": 512,
+        "max_new_tokens": 256,
         "do_sample": sample,
         "temperature": 0.6,
         "top_k": 50,
@@ -326,11 +334,20 @@ def evaluate(dataset_name, model, tokenizer, args):
     }
     all_model_answers = []
     all_gold_answers = []
-    for batch in dataloader:
+    from tqdm import tqdm
+    print("############################")
+    sys.stdout.flush()
+    for batch in tqdm(dataloader):
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        sys.stdout.flush()
         with torch.no_grad():
             gen_kwargs["attention_mask"] = batch['prompt_attention_mask'].to('cuda')
             gen_kwargs["input_ids"] = batch['prompt_input_ids'].to('cuda')
+            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            sys.stdout.flush()
             generated_tokens = model.generate(**gen_kwargs)
+            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            sys.stdout.flush()
 
         decoded_pred = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
         model_answers = [extract_answer(dataset_name, sentence_pred) for sentence_pred in decoded_pred]
@@ -353,7 +370,7 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='mistralai/Mistral-7B-v0.1')
-    parser.add_argument('--n_examples', type=int, default=1000)
+    parser.add_argument('--n_examples', type=int, default=100)
     parser.add_argument('--bs', type=int, default=64)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--verbose', action='store_true')

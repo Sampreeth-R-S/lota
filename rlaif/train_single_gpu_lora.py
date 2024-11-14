@@ -41,7 +41,7 @@ def worker_main(rank: int, world_size: int, config: DictConfig, policy: nn.Modul
 
     TrainerClass = getattr(trainers, config.trainer)
     print(f'Creating trainer on process {rank} with world size {world_size}')
-    trainer = TrainerClass(policy, config, config.seed, "/home/du1/21CS30038/lota/rlaif/scripts/outputs", reference_model=reference_model, rank=rank, world_size=world_size)
+    trainer = TrainerClass(policy, config, config.seed, "/root/Tests/DLTH_LoTA/output", reference_model=reference_model, rank=rank, world_size=world_size)
 
     trainer.train()
     # trainer.save(run_alpaca_eval=config.trigger_alpaca_eval)
@@ -83,12 +83,12 @@ def main(config: DictConfig):
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
         load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype,load_in_4bit=True,**model_kwargs)
+    
     # policy = torch.quantization.quantize_dynamic(
     #     policy,  # Model to be quantized
     #     {torch.nn.Linear},  # Layers to apply quantization
     #     dtype=torch.qint8  # Quantized data type
-    # )
-    
+    # )    
 
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
     peft_config = VeraConfig(
@@ -99,12 +99,14 @@ def main(config: DictConfig):
             target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
     )
     policy = get_peft_model(policy, peft_config)
-    for name, module in policy.named_modules():
-        print(name)
-    for name,p in policy.named_parameters():
-        if "adapter_weights" in name:
-            p.requires_grad = True
-            print(name,p.shape,p.requires_grad)
+    for name, param in policy.named_parameters():
+        print(f"Parameter: {name}, Size: {param.size()}, Total Elements: {param.numel()}")
+    # for name, module in policy.named_modules():
+    #     print(name)
+    # for name,p in policy.named_parameters():
+    #     if "adapter_weights" in name:
+    #         p.requires_grad = True
+    #         print(name,p.shape,p.requires_grad)
     freeze_odd_layers = config.freeze_odd_layers
     freeze_even_layers = config.freeze_even_layers
     if freeze_odd_layers:

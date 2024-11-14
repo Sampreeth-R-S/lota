@@ -107,7 +107,7 @@ class VeraLayer(BaseTunerLayer):
         # self.vera_lambda_d_upper[adapter_name] = nn.Parameter(torch.ones(r - 1), requires_grad=True)
         # self.vera_lambda_d_lower[adapter_name] = nn.Parameter(torch.ones(r - 1), requires_grad=True)
         # self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros((self.in_features, self.out_features)), requires_grad=True)
-        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros((self.in_features,self.out_features)), requires_grad=True)
+        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros((self.out_features,self.in_features)), requires_grad=True)
         
         #print(self.in_features,self.out_features,self.adapter_weights[adapter_name].shape)
         # non trainable references to vera_A/B buffers
@@ -383,7 +383,7 @@ class Linear(nn.Linear, VeraLayer):
                 # #full_rank_grad = self.get_delta_weight(active_adapter)
                 # self.projector.project(full_rank_grad,self.steps)
                 if(self.task == 1):
-                    result += F.linear(x,self.adapter_weights[active_adapter],bias=None)
+                    result += F.linear(x,self.adapter_weights[active_adapter].to(x.dtype),bias=None)
                 else:
                     result += F.linear(x,self.adapter_weights[active_adapter] * (global_maskA.to(self.adapter_weights[active_adapter].device)),bias=None)
                     #print("Second Task")
