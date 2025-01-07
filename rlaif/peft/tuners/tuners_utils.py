@@ -351,7 +351,7 @@ class BaseTuner(nn.Module, ABC):
                     if submodule[adapter_name].dtype in dtypes_to_convert_to_fp32:
                         submodule[adapter_name] = submodule[adapter_name].to(torch.float32)
                     continue
-
+                print(submodule[adapter_name])
                 for param in submodule[adapter_name].parameters():
                     if param.dtype in dtypes_to_convert_to_fp32:
                         param.data = param.data.to(torch.float32)

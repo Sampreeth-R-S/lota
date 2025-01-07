@@ -3,7 +3,7 @@
 #SBATCH --output=output2.txt
 #SBATCH --error=error2.txt
 #SBATCH --time=15:00:00
-#SBATCH --partition=gpupart_p100
+#SBATCH --partition=gpupart_v100
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=24gb

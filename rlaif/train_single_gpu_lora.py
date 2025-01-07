@@ -101,12 +101,12 @@ def main(config: DictConfig):
     policy = get_peft_model(policy, peft_config)
     for name, param in policy.named_parameters():
         print(f"Parameter: {name}, Size: {param.size()}, Total Elements: {param.numel()}")
-    # for name, module in policy.named_modules():
-    #     print(name)
-    # for name,p in policy.named_parameters():
-    #     if "adapter_weights" in name:
-    #         p.requires_grad = True
-    #         print(name,p.shape,p.requires_grad)
+    for name, module in policy.named_modules():
+        print(name)
+    for name,p in policy.named_parameters():
+        if "adapter_weights" in name:
+            p.requires_grad = True
+            print(name,p.shape,p.requires_grad)
     freeze_odd_layers = config.freeze_odd_layers
     freeze_even_layers = config.freeze_even_layers
     if freeze_odd_layers:
