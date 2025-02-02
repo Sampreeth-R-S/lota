@@ -38,7 +38,7 @@ from .._buffer_dict import BufferDict
 class VeraLayer(BaseTunerLayer):
     # List all names of layers that may contain adapter weights
     adapter_layer_names = ("adapter_weights",)
-    other_param_names = (indices)
+    other_param_names = ()
 
     def __init__(self, base_layer: nn.Module, **kwargs):
         self.base_layer = base_layer
