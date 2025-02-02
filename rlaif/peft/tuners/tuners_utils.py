@@ -351,10 +351,17 @@ class BaseTuner(nn.Module, ABC):
                     if submodule[adapter_name].dtype in dtypes_to_convert_to_fp32:
                         submodule[adapter_name] = submodule[adapter_name].to(torch.float32)
                     continue
-                print(submodule[adapter_name])
-                for param in submodule[adapter_name].parameters():
-                    if param.dtype in dtypes_to_convert_to_fp32:
-                        param.data = param.data.to(torch.float32)
+                print(adapter_name)
+                if(adapter_name=="indices"):
+                    continue
+                if isinstance(submodule[adapter_name], list):
+                    continue
+                try:
+                    for param in submodule[adapter_name].parameters():
+                        if param.dtype in dtypes_to_convert_to_fp32:
+                            param.data = param.data.to(torch.float32)
+                except AttributeError:
+                    continue
 
     def _check_merge_allowed(self):
         """Helper method to check whether the adapter can be merged.

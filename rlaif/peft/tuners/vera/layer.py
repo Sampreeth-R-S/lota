@@ -48,8 +48,8 @@ class VeraLayer(BaseTunerLayer):
         self.indices = nn.ParameterDict({})
         global global_maskA, global_maskB
         if global_maskA is None:
-            global_maskA = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
-            global_maskB = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
+            global_maskA = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
+            global_maskB = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
         self.mask = None
         self._disable_adapters = False
         self.merged_adapters = []
@@ -93,7 +93,7 @@ class VeraLayer(BaseTunerLayer):
         for i in range(min(global_maskA.shape[0],self.out_features)):
             for j in range(min(global_maskA.shape[1],self.in_features)):
                 if(global_maskA[i][j]==1):
-                    self.indices[adapter_name].append({i,j})
+                    self.indices[adapter_name].append((i,j))
         self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros(len(self.indices[adapter_name])), requires_grad=True)
         self._move_adapter_to_device_of_base_layer(adapter_name)
         self.set_adapter(self.active_adapters)
@@ -203,8 +203,8 @@ class Linear(nn.Linear, VeraLayer):
           continue
         if(use_global_mask):
             if(global_maskA is None):
-                global_maskA = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
-                global_maskB = torch.load("/home/du1/21CS30038/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
+                global_maskA = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
+                global_maskB = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
             if(task == 1):
                 masked_weights = self.adapter_weights[active_adapter] * global_maskA.to(self.adapter_weights[active_adapter].device)
             else:
@@ -220,7 +220,8 @@ class Linear(nn.Linear, VeraLayer):
     
     def forward(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
         previous_dtype = x.dtype
-        #print("Vera Layer Forward")
+        device = x.device  # Get the device from input tensor
+        
         if self.disable_adapters:
             if self.merged:
                 self.unmerge()
@@ -229,17 +230,34 @@ class Linear(nn.Linear, VeraLayer):
             result = self.base_layer(x, *args, **kwargs)
         else:
             result = self.base_layer(x, *args, **kwargs)
+            
             for active_adapter in self.active_adapters:
                 if active_adapter not in self.adapter_weights.keys():
                     continue
-                temp_weight = torch.zeros((self.out_features,self.in_features))
+                    
+                # Create temp_weight on the same device as input
+                temp_weight = torch.zeros((self.out_features, self.in_features), device=device)
+                
+                # Get indices
                 rows, cols = zip(*self.indices[active_adapter])
-                temp_weight[rows, cols] = self.adapter_weights[active_adapter]
-                if(self.task == 1):
-                    result += F.linear(x,temp_weight.to(x.dtype),bias=None)
+                
+                # Ensure adapter weights are on the correct device
+                adapter_weights = self.adapter_weights[active_adapter].to(device)
+                
+                # Assign values
+                temp_weight[rows, cols] = adapter_weights
+                
+                if self.task == 1:
+                    result += F.linear(x, temp_weight.to(x.dtype), bias=None)
                 else:
-                    result += F.linear(x,self.adapter_weights[active_adapter] * (global_maskA.to(self.adapter_weights[active_adapter].device)),bias=None)
-                    #print("Second Task")
+                    # Ensure global mask is on the correct device
+                    global_maskA_device = global_maskA.to(device)
+                    result += F.linear(
+                        x,
+                        (adapter_weights * global_maskA_device).to(x.dtype),
+                        bias=None
+                    )
+        
         result = result.to(previous_dtype)
         return result
 

@@ -15,3 +15,5 @@
 /mistral/safety_evaluation/question_output
 *.pyc
 /rlaif/scripts/~/.cache
+myenv/
+rlaif/scripts/outputs
