@@ -90,11 +90,11 @@ class VeraLayer(BaseTunerLayer):
 
         self.vera_dropout.update(nn.ModuleDict({adapter_name: vera_dropout_layer}))
         self.indices[adapter_name] = []
-        for i in range(min(global_maskA.shape[0],self.out_features)):
-            for j in range(min(global_maskA.shape[1],self.in_features)):
-                if(global_maskA[i][j]==1):
-                    self.indices[adapter_name].append((i,j))
-        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros(len(self.indices[adapter_name])), requires_grad=True)
+        indices_tensor = torch.nonzero(global_maskA[:self.out_features, :self.in_features], as_tuple=False)
+        self.indices[adapter_name] = indices_tensor  # Store as tensor
+        self.indices[adapter_name].requires_grad=False
+        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros(indices_tensor.shape[0]), requires_grad=True)
+        
         self._move_adapter_to_device_of_base_layer(adapter_name)
         self.set_adapter(self.active_adapters)
         
@@ -235,17 +235,9 @@ class Linear(nn.Linear, VeraLayer):
                 if active_adapter not in self.adapter_weights.keys():
                     continue
                     
-                # Create temp_weight on the same device as input
-                temp_weight = torch.zeros((self.out_features, self.in_features), device=device)
-                
-                # Get indices
-                rows, cols = zip(*self.indices[active_adapter])
-                
-                # Ensure adapter weights are on the correct device
-                adapter_weights = self.adapter_weights[active_adapter].to(device)
-                
-                # Assign values
-                temp_weight[rows, cols] = adapter_weights
+                temp_weight = torch.zeros((self.out_features, self.in_features), device=x.device)
+                indices = self.indices[active_adapter].to(x.device)
+                temp_weight[indices[:, 0], indices[:, 1]] = self.adapter_weights[active_adapter]
                 
                 if self.task == 1:
                     result += F.linear(x, temp_weight.to(x.dtype), bias=None)
