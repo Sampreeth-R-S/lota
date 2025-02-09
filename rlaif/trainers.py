@@ -539,10 +539,16 @@ class BasicTrainer(object):
             for i, param_group in enumerate(self.optimizer.param_groups):
                 print(f"Parameter Group {i}:")
                 for j, param in enumerate(param_group['params']):
-                    if param.grad is not None:
-                        print(f" - Param {j} Gradient:\n {param.grad}")
+                    # Find the corresponding parameter name
+                    for name, model_param in self.model.named_parameters():
+                        if param is model_param:  # Match parameter object
+                            param_name = name
+                            break
                     else:
-                        print(f" - Param {j} has no gradient (may be frozen or unused).")
+                        param_name = "Unknown"
+                    if param.grad is not None:
+                        print(f" - Param {j} ({param_name}) Gradient:\n {param.grad}")
+
             self.optimizer.step()
             print("performed self.optimizer.step()")
             self.scheduler.step()
