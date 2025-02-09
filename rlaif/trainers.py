@@ -540,7 +540,7 @@ class BasicTrainer(object):
                 print(f"Parameter Group {i}:")
                 for j, param in enumerate(param_group['params']):
                     # Find the corresponding parameter name
-                    for name, model_param in self.model.named_parameters():
+                    for name, model_param in self.policy.named_parameters():
                         if param is model_param:  # Match parameter object
                             param_name = name
                             break
