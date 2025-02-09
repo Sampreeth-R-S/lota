@@ -546,8 +546,13 @@ class BasicTrainer(object):
                             break
                     else:
                         param_name = "Unknown"
+
+                    # Print parameter value and its gradient
                     if param.grad is not None:
-                        print(f" - Param {j} ({param_name}) Gradient:\n {param.grad}")
+                        print(f" - Param {j} ({param_name}):")
+                        print(f"   - Value:\n{param.data}")  # Prints the parameter values
+                        print(f"   - Gradient:\n{param.grad}")  # Prints the gradients
+
 
             self.optimizer.step()
             print("performed self.optimizer.step()")
