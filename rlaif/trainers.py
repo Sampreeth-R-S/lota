@@ -307,6 +307,7 @@ class BasicTrainer(object):
             losses = -policy_chosen_logps
             if train:
                 losses.mean().backward()
+                print("Performed loss.backward()")
 
         policy_chosen_logps = all_gather_if_needed(policy_chosen_logps.detach(), self.rank, self.world_size)
         metrics[f'logps_{train_test}/chosen'] = policy_chosen_logps.cpu().numpy().tolist()
@@ -533,9 +534,17 @@ class BasicTrainer(object):
             # if(steps%1500==0):
             #     lambda_val+=0.1
             # steps+=1
-            self.apply_mask_and_print_grad_norm()
+            # self.apply_mask_and_print_grad_norm()
             grad_norm = self.clip_gradient()
+            for i, param_group in enumerate(self.optimizer.param_groups):
+                print(f"Parameter Group {i}:")
+                for j, param in enumerate(param_group['params']):
+                    if param.grad is not None:
+                        print(f" - Param {j} Gradient:\n {param.grad}")
+                    else:
+                        print(f" - Param {j} has no gradient (may be frozen or unused).")
             self.optimizer.step()
+            print("performed self.optimizer.step()")
             self.scheduler.step()
             self.optimizer.zero_grad()
 

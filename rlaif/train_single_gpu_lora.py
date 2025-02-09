@@ -41,7 +41,7 @@ def worker_main(rank: int, world_size: int, config: DictConfig, policy: nn.Modul
 
     TrainerClass = getattr(trainers, config.trainer)
     print(f'Creating trainer on process {rank} with world size {world_size}')
-    trainer = TrainerClass(policy, config, config.seed, "/root/Tests/DLTH_LoTA/output", reference_model=reference_model, rank=rank, world_size=world_size)
+    trainer = TrainerClass(policy, config, config.seed, "/home/du1/21CS30038/lota/rlaif/scripts", reference_model=reference_model, rank=rank, world_size=world_size)
 
     trainer.train()
     # trainer.save(run_alpaca_eval=config.trigger_alpaca_eval)
@@ -82,7 +82,7 @@ def main(config: DictConfig):
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
-        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype,load_in_4bit=True,**model_kwargs)
+        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype,**model_kwargs)
     
     # policy = torch.quantization.quantize_dynamic(
     #     policy,  # Model to be quantized
@@ -96,7 +96,7 @@ def main(config: DictConfig):
             bias="none",
             task_type="CAUSAL_LM",
             # use_dora=True,
-            target_modules=['k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj']
+            target_modules=['c_attn', 'c_proj', 'c_fc']
     )
     policy = get_peft_model(policy, peft_config)
     for name, param in policy.named_parameters():
