@@ -45,7 +45,7 @@ class VeraLayer(BaseTunerLayer):
         self.r = {}
         self.vera_dropout = nn.ModuleDict({})
         self.adapter_weights = nn.ParameterDict({})
-        self.indices = nn.ParameterDict({})
+        self.indices = {}
         global global_maskA, global_maskB
         if global_maskA is None:
             global_maskA = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()

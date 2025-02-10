@@ -82,7 +82,7 @@ def main(config: DictConfig):
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
-        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype,load_in_4bit=True,**model_kwargs)
+        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, **model_kwargs)
     
     # policy = torch.quantization.quantize_dynamic(
     #     policy,  # Model to be quantized

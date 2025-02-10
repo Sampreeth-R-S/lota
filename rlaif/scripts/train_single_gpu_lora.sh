@@ -14,14 +14,14 @@ huggingface-cli login --token "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"
 export WANDB_API_KEY="51bee7d3cdc3e9154459f935c5e4ea81ad2ef813"
 
 
-archive="${1:-meta-llama/Llama-3.2-1B}"
+archive="${1:-meta-llama/Llama-3.2-1B-Instruct}"
 lr="${2:-5e-7}"
 dataset_name="${3:-gsm8k}"
 data_fraction="${4:-1.0}"
 n_epochs="${5:-3}"
 mask_dir="${6:-none}"
 sparsity_ratio="${7:-0.0}"
-batch_size="${8:-8}"
+batch_size="${8:-4}"
 model="${9:-llama3}"
 grad_norm="${10:-10}"
 lora_rank="${11:-8}"
@@ -44,7 +44,7 @@ python -u ../train_single_gpu_lora.py do_first_eval=False \
         model.archive=${model_archive} \
         datasets=[${dataset_name}] \
         exp_name=${exp_name} \
-        eval_batch_size=16 \
+        eval_batch_size=8 \
         sample_during_eval=false \
         lr=$lr \
         trainer=$trainer_type \
@@ -66,6 +66,11 @@ python -u ../train_single_gpu_lora.py do_first_eval=False \
 # python ../convert_policy_to_hf_lora.py --lora_rank ${lora_rank} --model_path ${model_archive} --policy_path ${model_save_path}/epoch-$n_epochs/policy.pt --save_path ${model_save_path}/epoch-$n_epochs/
 
 # python ../eval_model_all.py --model "${model_save_path}/epoch-$n_epochs/" --datasets "${dataset_name}"
+# python ../eval_model_all.py --model "/root/Tests/DLTH_LoTA/output/epoch-2/" --datasets "gsm8k"
+
+# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B" --datasets "gsm8k"
+# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B-Instruct" --datasets "gsm8k"
+
 
 # python ../generate_samples.py --prompt_set alpaca_eval --temperatures 0.7 --model_name ${exp_name} --model_path ${model_save_path}/epoch-$n_epochs/
 
