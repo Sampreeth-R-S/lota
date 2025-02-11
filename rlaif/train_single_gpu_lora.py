@@ -41,7 +41,7 @@ def worker_main(rank: int, world_size: int, config: DictConfig, policy: nn.Modul
 
     TrainerClass = getattr(trainers, config.trainer)
     print(f'Creating trainer on process {rank} with world size {world_size}')
-    trainer = TrainerClass(policy, config, config.seed, "/home/du1/21CS30038/lota/rlaif/scripts", reference_model=reference_model, rank=rank, world_size=world_size)
+    trainer = TrainerClass(policy, config, config.seed, "/kaggle/working/lota/rlaif", reference_model=reference_model, rank=rank, world_size=world_size)
 
     trainer.train()
     # trainer.save(run_alpaca_eval=config.trigger_alpaca_eval)
