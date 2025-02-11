@@ -279,13 +279,16 @@ def load_model_tokenizer(args):
     import transformers 
     import argparse
     from transformers import LlamaTokenizer
-    model = transformers.AutoModelForCausalLM.from_pretrained(args.model, load_in_4bit=True, torch_dtype=torch.bfloat16, device_map='cuda')
+    model = transformers.AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, device_map='cuda')
     if tokenizer.pad_token_id is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         model.config.pad_token_id = tokenizer.pad_token_id
         model.resize_token_embeddings(len(tokenizer))
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
     model = PeftModel.from_pretrained(model, '/root/Tests/DLTH_LoTA/output/epoch-3')
+    for name,p in model.named_parameters():
+        if "adapter_weights" in name:
+            print(p.data)
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         model.resize_token_embeddings(len(tokenizer))
@@ -322,8 +325,8 @@ def evaluate(dataset_name, model, tokenizer, args):
     if args.sample:
         sample = True
     gen_kwargs = {
-        "max_new_tokens": 256,
-        "do_sample": sample,
+        "max_new_tokens": 512,
+        "do_sample": False,
         "temperature": 0.6,
         "top_k": 50,
         "top_p": 0.9,
@@ -354,7 +357,7 @@ def evaluate(dataset_name, model, tokenizer, args):
         gold_answers = [extract_answer(dataset_name, sentence_gold) for sentence_gold in batch['chosen_response_only']]
         all_model_answers.extend(model_answers)
         all_gold_answers.extend(gold_answers)
-        if args.verbose:
+        if True:
             acc = compute_accuracy(dataset_name, model_answers, gold_answers)
             print(decoded_pred[0])
             print(model_answers[0])
