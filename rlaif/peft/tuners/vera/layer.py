@@ -90,7 +90,13 @@ class VeraLayer(BaseTunerLayer):
 
         self.vera_dropout.update(nn.ModuleDict({adapter_name: vera_dropout_layer}))
         self.indices[adapter_name] = []
-        indices_tensor = torch.nonzero(global_maskA[:self.out_features, :self.in_features], as_tuple=False)
+        if self.out_features == 14336 and self.in_features == 4096:
+            indices_tensor = torch.nonzero(global_maskA[:14336, :4096], as_tuple=False)
+        elif self.out_features == 4096 and self.in_features == 14336:
+            indices_tensor = torch.nonzero(global_maskA[:14336, :4096].T, as_tuple=False)
+        else:
+            indices_tensor = torch.nonzero(global_maskA[:self.out_features, :self.in_features], as_tuple=False)
+
         self.indices[adapter_name] = indices_tensor  # Store as tensor
         self.indices[adapter_name].requires_grad=False
         self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros(indices_tensor.shape[0]), requires_grad=True)

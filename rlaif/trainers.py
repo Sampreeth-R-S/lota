@@ -533,8 +533,25 @@ class BasicTrainer(object):
             # if(steps%1500==0):
             #     lambda_val+=0.1
             # steps+=1
+            
             self.apply_mask_and_print_grad_norm()
             grad_norm = self.clip_gradient()
+            for i, param_group in enumerate(self.optimizer.param_groups):
+                print(f"Parameter Group {i}:")
+                for j, param in enumerate(param_group['params']):
+                    # Find the corresponding parameter name
+                    for name, model_param in self.policy.named_parameters():
+                        if param is model_param:  # Match parameter object
+                            param_name = name
+                            break
+                    else:
+                        param_name = "Unknown"
+
+                    # Print parameter value and its gradient
+                    if param.grad is not None:
+                        print(f" - Param {j} ({param_name}):")
+                        print(f"   - Value:\n{param.data}")  # Prints the parameter values
+                        print(f"   - Gradient:\n{param.grad}")
             self.optimizer.step()
             self.scheduler.step()
             self.optimizer.zero_grad()
