@@ -1,4 +1,4 @@
-Collecting accelerate
+ollecting accelerate
   Downloading accelerate-1.0.1-py3-none-any.whl.metadata (19 kB)
 Requirement already satisfied: numpy<3.0.0,>=1.17 in /root/Tests/DLTH_LoTA/venv/lib/python3.10/site-packages (from accelerate) (2.1.2)
 Requirement already satisfied: packaging>=20.0 in /root/Tests/DLTH_LoTA/venv/lib/python3.10/site-packages (from accelerate) (24.1)

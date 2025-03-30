@@ -2,7 +2,7 @@ import re
 import torch
 import os
 import sys
-
+import time
 from preference_datasets import get_gsm8k, get_batch_iterator
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils import pad_to_length, all_gather_if_needed
@@ -279,13 +279,21 @@ def load_model_tokenizer(args):
     import transformers 
     import argparse
     from transformers import LlamaTokenizer
-    model = transformers.AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16, device_map='cuda')
+    model = transformers.AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.bfloat16
+                                                              #device_map='cuda'
+                                                              )
     if tokenizer.pad_token_id is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         model.config.pad_token_id = tokenizer.pad_token_id
         model.resize_token_embeddings(len(tokenizer))
     from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-    model = PeftModel.from_pretrained(model, '/root/Tests/DLTH_LoTA/output/epoch-3')
+    model = PeftModel.from_pretrained(model, '/raid/pabitracs/Sampreeth/lota/rlaif/scripts/fine_tuned_model/epoch-3')
+    from safetensors.torch import load_file
+    state_dict = load_file('/raid/pabitracs/ARC-Challenge_non_instruct_large.safetensors')
+    model.load_state_dict(state_dict)
+    model.to('cuda')
+    print("Loaded fine tuned model")
+    time.sleep(10)
     for name,p in model.named_parameters():
         if "adapter_weights" in name:
             print(p.data)
@@ -366,14 +374,13 @@ def evaluate(dataset_name, model, tokenizer, args):
     acc = compute_accuracy(dataset_name, all_model_answers, all_gold_answers)
     print(f"Accuracy: {acc}")
     # write the accuracy to a .txt file (appending) for logging purposes, in the directory args.model
-    with open(f"{args.model}/metrics/{dataset}_accuracy.txt", "a") as f:
-        f.write(f"Accuracy: {acc}\n")
-
+    
+    
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='mistralai/Mistral-7B-v0.1')
-    parser.add_argument('--n_examples', type=int, default=100)
+    parser.add_argument('--n_examples', type=int, default=500)
     parser.add_argument('--bs', type=int, default=64)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--verbose', action='store_true')
@@ -394,7 +401,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     model, tokenizer = load_model_tokenizer(args)
-    os.makedirs(f"{args.model}/metrics", exist_ok=True)
+    os.makedirs(f"{args.model}_results/metrics", exist_ok=True)
     for _ in range(args.num_runs):
         for dataset in args.datasets:
             evaluate(dataset, model, tokenizer, args)

@@ -499,7 +499,8 @@ class BasicTrainer(object):
             #### END EVALUATION ####
             output_dir = os.path.join(self.run_dir, f'epoch-{self.example_counter // n_examples_per_epoch}')
             # self.save(output_dir, mean_eval_metrics, run_alpaca_eval=self.config.trigger_alpaca_eval)
-            self.policy.save_pretrained(output_dir)
+            # self.policy.save_pretrained(output_dir)
+            # torch.save(self.policy.state_dict(),'gsm_8k.pt')
             #### BEGIN TRAINING ####
             self.policy.train()
 
@@ -536,22 +537,6 @@ class BasicTrainer(object):
             
             self.apply_mask_and_print_grad_norm()
             grad_norm = self.clip_gradient()
-            for i, param_group in enumerate(self.optimizer.param_groups):
-                print(f"Parameter Group {i}:")
-                for j, param in enumerate(param_group['params']):
-                    # Find the corresponding parameter name
-                    for name, model_param in self.policy.named_parameters():
-                        if param is model_param:  # Match parameter object
-                            param_name = name
-                            break
-                    else:
-                        param_name = "Unknown"
-
-                    # Print parameter value and its gradient
-                    if param.grad is not None:
-                        print(f" - Param {j} ({param_name}):")
-                        print(f"   - Value:\n{param.data}")  # Prints the parameter values
-                        print(f"   - Gradient:\n{param.grad}")
             self.optimizer.step()
             self.scheduler.step()
             self.optimizer.zero_grad()
@@ -599,6 +584,26 @@ class BasicTrainer(object):
                         next_save += self.config.save_every
                     rank0_print(f'creating checkpoint to write to {output_dir}...')
                     self.save(output_dir, mean_eval_metrics, run_alpaca_eval=self.config.trigger_alpaca_eval)
+                    from safetensors.torch import save_file
+                    state_dict = self.policy.state_dict()
+                    save_file(state_dict, "/raid/pabitracs/ultrafeedback_non_instruct_large.safetensors")
+                    #torch.save(self.policy.state_dict(),'/raid/pabitracs/ultrafeedback_non_instruct_large.pt')
+                    for i, param_group in enumerate(self.optimizer.param_groups):
+                        print(f"Parameter Group {i}:")
+                        for j, param in enumerate(param_group['params']):
+                            # Find the corresponding parameter name
+                            for name, model_param in self.policy.named_parameters():
+                                if param is model_param:  # Match parameter object
+                                    param_name = name
+                                    break
+                            else:
+                                param_name = "Unknown"
+
+                            # Print parameter value and its gradient
+                            if param.grad is not None:
+                                print(f" - Param {j} ({param_name}):")
+                                print(f"   - Value:\n{param.data}")  # Prints the parameter values
+                                print(f"   - Gradient:\n{param.grad}")
             #### END SAVING ####
 
     def clip_gradient(self):

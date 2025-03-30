@@ -48,13 +48,39 @@ def main():
         model_path = 'EleutherAI/pythia-2.8b'
     else:
         model_path = args.model_path
-    from transformers import LlamaTokenizer, AutoTokenizer
-    policy = transformers.AutoModelForCausalLM.from_pretrained(model_path, device_map='balanced')
-    tokenizer = AutoTokenizer.from_pretrained(model_path, add_eos_token=False, add_bos_token=False)
-    # tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-v0.1", add_eos_token=False, add_bos_token=False)
+    # from transformers import LlamaTokenizer, AutoTokenizer
+    # model = transformers.AutoModelForCausalLM.from_pretrained(model_path, device_map='balanced')
+    # tokenizer = AutoTokenizer.from_pretrained(model_path, add_eos_token=False, add_bos_token=False)
+    # # tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-v0.1", add_eos_token=False, add_bos_token=False)
+    # if tokenizer.pad_token_id is None:
+    #     tokenizer.add_special_tokens({'pad_token': '<PAD>'})
+    # model.resize_token_embeddings(len(tokenizer))
+    from transformers import LlamaTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    model = transformers.AutoModelForCausalLM.from_pretrained(args.model_name, torch_dtype=torch.bfloat16
+                                                              #device_map='cuda'
+                                                              )
     if tokenizer.pad_token_id is None:
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
-    policy.resize_token_embeddings(len(tokenizer))
+        model.config.pad_token_id = tokenizer.pad_token_id
+        model.resize_token_embeddings(len(tokenizer))
+    if args.prompt_set == 'alpaca_eval':
+        max_length = args.max_length
+        max_prompt_length = args.max_prompt_length
+        chunk_size = args.chunk_size
+        assert args.num_samples_per_prefix == 1
+        output_dir = args.model_path
+    prompt_iterator = get_batch_iterator(['alpaca_eval'], tokenizer=tokenizer, split='eval', batch_size=args.chunk_size, sft_mode=True,
+                                                 seed=0, n_epochs=1, cache_dir=args.cache_dir, shuffle=False,
+                                                 max_prompt_length=max_prompt_length, max_length=max_length)
+    from peft import VeraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+    model = PeftModel.from_pretrained(model, '/raid/pabitracs/Sampreeth/lota/rlaif/scripts/fine_tuned_model/epoch-3')
+    from safetensors.torch import load_file
+    state_dict = load_file('/raid/pabitracs/ultrafeedback_non_instruct_large.safetensors')
+    model.load_state_dict(state_dict)
+    model.to('cuda')
+    print("Loaded fine tuned model")
         # tokenizer.pad_token_id = tokenizer.eos_token_id
     # tokenizer = LlamaTokenizer.from_pretrained("/scratch/gpfs/ashwinee/rlaif-cache/models--mistralai--Mistral-7B-v0.1/snapshots/26bca36bde8333b5d7f72e9ed20ccda6a618af24")
     # print(tokenizer)
@@ -62,8 +88,8 @@ def main():
 
     if args.archive is not None:
         print('loading pre-trained weights')
-        state_dict = torch.load(os.path.join(args.archive, 'policy.pt'), map_location='cpu')
-        policy.load_state_dict(state_dict['state'])
+        state_dict = torch.load(os.path.join(args.archive, 'model.pt'), map_location='cpu')
+        model.load_state_dict(state_dict['state'])
         print('loaded pre-trained weights')
 
     all_models = {}
@@ -114,13 +140,13 @@ def main():
 
     for temp in temps:
         print(f'generating samples at temperature {temp}')
-        policy.eval()
-        policy.half()
-        policy.to('cuda')
+        model.eval()
+        # model.half()
+        model.to('cuda')
         if args.prompt_set == 'alpaca_eval':
             prompt_iterator = get_batch_iterator(['alpaca_eval'], tokenizer=tokenizer, split='eval', batch_size=chunk_size, sft_mode=True,
                                                  seed=0, n_epochs=1, cache_dir=args.cache_dir, shuffle=False,
-                                                 max_prompt_length=max_prompt_length, max_length=max_length)
+                                                 max_prompt_length=max_prompt_length, max_length=max_length, drop_last=False)
         elif args.prompt_set == 'sharegpt':
             prompt_iterator = get_batch_iterator(['sharegpt'], tokenizer=tokenizer, split='combined', batch_size=chunk_size, sft_mode=True,
                                                  seed=0, n_epochs=1, cache_dir=args.cache_dir, shuffle=False,
@@ -145,9 +171,9 @@ def main():
             for _ in range(args.num_samples_per_prefix):
                 with torch.no_grad():
                     if temp > 0.0:
-                        outputs = policy.generate(**generator_input, max_length=max_length, do_sample=True, top_p=0.9, temperature=temp, pad_token_id=tokenizer.pad_token_id)
+                        outputs = model.generate(**generator_input, max_length=max_length, do_sample=True, top_p=0.9, temperature=temp, pad_token_id=tokenizer.pad_token_id)
                     else:
-                        outputs = policy.generate(**generator_input, max_length=max_length, do_sample=False, pad_token_id=tokenizer.pad_token_id)
+                        outputs = model.generate(**generator_input, max_length=max_length, do_sample=False, pad_token_id=tokenizer.pad_token_id)
 
                 for idx, output in enumerate(outputs):
                     # cur_prompt -> complete prompt
@@ -161,9 +187,14 @@ def main():
                         responses[cur_prompt] = [cur_response_only]
                     else:
                         responses[cur_prompt].append(cur_response_only)
-
+            if batch_idx % 1 == 0:
+                print(f'finished generating {batch_idx * chunk_size} prompts')
+                import sys
+                sys.stdout.flush()
             if batch_idx % 10 == 0:
                 print(f'finished generating {batch_idx * chunk_size} prompts')
+                import sys
+                sys.stdout.flush()
                 dump_files(responses, all_models, temp, args)
 
         dump_files(responses, all_models, temp, args)
@@ -178,10 +209,10 @@ if __name__ == '__main__':
     parser.add_argument('--prompt_set', type=str, default='alpaca_eval')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--ff', type=int, default=0)
-    parser.add_argument('--cache_dir', type=str, default=os.getenv("PROJECT_CACHE", "~/.cache"))
+    parser.add_argument('--cache_dir', type=str, default=os.getenv("PROJECT_CACHE", "/home/pabitracs/Sampreeth/lota/rlaif/scripts/~/.cache"))
     parser.add_argument('--max_length', type=int, default=512)
     parser.add_argument('--max_prompt_length', type=int, default=256)
-    parser.add_argument('--chunk_size', type=int, default=32)
+    parser.add_argument('--chunk_size', type=int, default=35)
     parser.add_argument('--data_fraction', type=float, default=1.0)
     args = parser.parse_args()
 

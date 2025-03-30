@@ -48,8 +48,8 @@ class VeraLayer(BaseTunerLayer):
         self.indices = {}
         global global_maskA, global_maskB
         if global_maskA is None:
-            global_maskA = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
-            global_maskB = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
+            global_maskA = torch.load("/home/pabitracs/Sampreeth/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
+            global_maskB = torch.load("/home/pabitracs/Sampreeth/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
         self.mask = None
         self._disable_adapters = False
         self.merged_adapters = []
@@ -209,8 +209,8 @@ class Linear(nn.Linear, VeraLayer):
           continue
         if(use_global_mask):
             if(global_maskA is None):
-                global_maskA = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
-                global_maskB = torch.load("/root/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
+                global_maskA = torch.load("/home/pabitracs/Sampreeth/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
+                global_maskB = torch.load("/home/pabitracs/Sampreeth/lota/rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt").float()
             if(task == 1):
                 masked_weights = self.adapter_weights[active_adapter] * global_maskA.to(self.adapter_weights[active_adapter].device)
             else:

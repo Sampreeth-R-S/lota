@@ -41,7 +41,7 @@ def worker_main(rank: int, world_size: int, config: DictConfig, policy: nn.Modul
 
     TrainerClass = getattr(trainers, config.trainer)
     print(f'Creating trainer on process {rank} with world size {world_size}')
-    trainer = TrainerClass(policy, config, config.seed, "/root/Tests/DLTH_LoTA/output", reference_model=reference_model, rank=rank, world_size=world_size)
+    trainer = TrainerClass(policy, config, config.seed, "/raid/pabitracs/Sampreeth/lota/rlaif/scripts/fine_tuned_model", reference_model=reference_model, rank=rank, world_size=world_size)
 
     trainer.train()
     # trainer.save(run_alpaca_eval=config.trigger_alpaca_eval)
@@ -82,7 +82,9 @@ def main(config: DictConfig):
     load_path = config.model.archive if "null" not in config.model.archive else config.model.name_or_path
     print('building policy from path', load_path)
     policy = transformers.AutoModelForCausalLM.from_pretrained(
-        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, **model_kwargs)
+        load_path, low_cpu_mem_usage=True, use_cache=False, torch_dtype=policy_dtype, 
+        **model_kwargs,
+    )
     
     # policy = torch.quantization.quantize_dynamic(
     #     policy,  # Model to be quantized
@@ -158,7 +160,7 @@ def main(config: DictConfig):
     #     if not config.ckpt_path:
     #         config.fast_forward = 0
     #         print("No valid checkpoint found, starting from scratch.")
-
+    
     if 'FSDP' in config.trainer:
         world_size = torch.cuda.device_count()
         print('starting', world_size, 'processes for FSDP training')
@@ -166,7 +168,11 @@ def main(config: DictConfig):
     else:
         print('starting single-process worker')
         worker_main(0, 1, config, policy, reference_model)
+    torch.save(policy.state_dict(),'/raid/temp.pt')
 
 
 if __name__ == '__main__':
+    import torch
+    torch.cuda.empty_cache()
+
     main()

@@ -1,6 +1,0 @@
-{"time":"2024-10-22T23:23:00.199330237+05:30","level":"INFO","msg":"started logging, with flags","port-filename":"/tmp/tmpxstfqjev/port-574698.txt","pid":574698,"debug":false,"disable-analytics":false}
-{"time":"2024-10-22T23:23:00.199461837+05:30","level":"INFO","msg":"FeatureState","shutdownOnParentExitEnabled":false}
-{"time":"2024-10-22T23:23:00.250470548+05:30","level":"INFO","msg":"Will exit if parent process dies.","ppid":574698}
-{"time":"2024-10-22T23:23:00.250512774+05:30","level":"INFO","msg":"server is running","addr":{"IP":"127.0.0.1","Port":44599,"Zone":""}}
-{"time":"2024-10-22T23:23:00.319610283+05:30","level":"INFO","msg":"created new connection","id":"127.0.0.1:32844"}
-{"time":"2024-10-23T02:26:30.306931862+05:30","level":"INFO","msg":"Parent process exited, terminating service process."}

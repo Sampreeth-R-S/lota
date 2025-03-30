@@ -1,27 +1,31 @@
 #!/bin/bash
 #SBATCH --job-name=my_job
-#SBATCH --output=output2.txt
-#SBATCH --error=error2.txt
-#SBATCH --time=15:00:00
-#SBATCH --partition=gpupart_v100
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=24gb
-source activate /home/du1/21CS30038/.conda/envs/pytorch_env
+#SBATCH --output=output_ultrafeedback_noninstruct_8b.txt
+#SBATCH --error=error_ultrafeedback_noninstruct_8b.txt
+#SBATCH --time=1-12:00:00
+#SBATCH --partition=dgx2
+#SBATCH --qos=gpu2
+#SBATCH --gres=gpu:2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=100gb
+source ~/miniconda3/bin/activate base
+nvidia-smi
 export CUDA_LAUNCH_BLOCKING=1
 pip install huggingface-hub
 huggingface-cli login --token "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"
 export WANDB_API_KEY="51bee7d3cdc3e9154459f935c5e4ea81ad2ef813"
+export WANDB_MODE=offline
 
-
-archive="${1:-meta-llama/Llama-3.2-1B-Instruct}"
-lr="${2:-5e-7}"
-dataset_name="${3:-gsm8k}"
+archive="${1:-meta-llama/Meta-Llama-3-8B}"
+lr="${2:-1e-5}"
+dataset_name="${3:-ultrafeedback}"
 data_fraction="${4:-1.0}"
 n_epochs="${5:-3}"
 mask_dir="${6:-none}"
 sparsity_ratio="${7:-0.0}"
-batch_size="${8:-4}"
+batch_size="${8:-8}"
 model="${9:-llama3}"
 grad_norm="${10:-10}"
 lora_rank="${11:-8}"
