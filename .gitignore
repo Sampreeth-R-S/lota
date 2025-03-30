@@ -21,3 +21,4 @@ rlaif/tasks/TIGER-Lab___math_instruct
 ssh*
 rlaif/tasks/TIGER-Lab___math_instruct/default/0.0.0/b4fdc323a7be1379c9c7c0b67b1de72dfee2111a/math_instruct-train.arrow
 rlaif/peft/tuners/vera/mask_tensor_B_10percent.pt
+rlaif/scripts/open_ai.sh
