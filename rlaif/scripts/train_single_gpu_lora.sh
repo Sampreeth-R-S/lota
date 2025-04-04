@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=my_job
-#SBATCH --output=output_ultrafeedback_noninstruct_8b.txt
-#SBATCH --error=error_ultrafeedback_noninstruct_8b.txt
+#SBATCH --output=output_samsum_sequential_noninstruct_8b.txt
+#SBATCH --error=error_samsum_sequential_noninstruct_8b.txt
 #SBATCH --time=1-12:00:00
 #SBATCH --partition=dgx2
 #SBATCH --qos=gpu2
@@ -19,8 +19,8 @@ export WANDB_API_KEY="51bee7d3cdc3e9154459f935c5e4ea81ad2ef813"
 export WANDB_MODE=offline
 
 archive="${1:-meta-llama/Meta-Llama-3-8B}"
-lr="${2:-1e-5}"
-dataset_name="${3:-ultrafeedback}"
+lr="${2:-1e-6}"
+dataset_name="${3:-samsum}"
 data_fraction="${4:-1.0}"
 n_epochs="${5:-3}"
 mask_dir="${6:-none}"
@@ -70,10 +70,10 @@ python -u ../train_single_gpu_lora.py do_first_eval=False \
 # python ../convert_policy_to_hf_lora.py --lora_rank ${lora_rank} --model_path ${model_archive} --policy_path ${model_save_path}/epoch-$n_epochs/policy.pt --save_path ${model_save_path}/epoch-$n_epochs/
 
 # python ../eval_model_all.py --model "${model_save_path}/epoch-$n_epochs/" --datasets "${dataset_name}"
-# python ../eval_model_all.py --model "/root/Tests/DLTH_LoTA/output/epoch-2/" --datasets "gsm8k"
+# python ../eval_model_all.py --model "/root/Tests/DLTH_LoTA/output/epoch-2/" --datasets "samsum"
 
-# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B" --datasets "gsm8k"
-# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B-Instruct" --datasets "gsm8k"
+# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B" --datasets "samsum"
+# python ../eval_model_all.py --model "meta-llama/Llama-3.2-1B-Instruct" --datasets "samsum"
 
 
 # python ../generate_samples.py --prompt_set alpaca_eval --temperatures 0.7 --model_name ${exp_name} --model_path ${model_save_path}/epoch-$n_epochs/

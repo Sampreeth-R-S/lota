@@ -10,6 +10,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=100gb
+ls /raid/pabitracs/
 source ~/miniconda3/bin/activate base
 ls /raid/pabitracs/Sampreeth/lota/rlaif/scripts/fine_tuned_model
 export CUDA_LAUNCH_BLOCKING=1

@@ -317,7 +317,7 @@ def load_dataset(dataset_name, tokenizer, args):
         data_fraction=1.0,
         split='test', 
         n_epochs=1, 
-        n_examples=args.n_examples,
+        # n_examples=args.n_examples,
         batch_size=args.bs, 
         cache_dir=cache_dir,
         seed=args.seed,

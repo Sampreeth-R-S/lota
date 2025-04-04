@@ -586,8 +586,8 @@ class BasicTrainer(object):
                     self.save(output_dir, mean_eval_metrics, run_alpaca_eval=self.config.trigger_alpaca_eval)
                     from safetensors.torch import save_file
                     state_dict = self.policy.state_dict()
-                    save_file(state_dict, "/raid/pabitracs/ultrafeedback_non_instruct_large.safetensors")
-                    #torch.save(self.policy.state_dict(),'/raid/pabitracs/ultrafeedback_non_instruct_large.pt')
+                    save_file(state_dict, "/raid/pabitracs/samsum_sequential_non_instruct_large.safetensors")
+                    #torch.save(self.policy.state_dict(),'/raid/pabitracs/samsum_non_instruct_large.pt')
                     for i, param_group in enumerate(self.optimizer.param_groups):
                         print(f"Parameter Group {i}:")
                         for j, param in enumerate(param_group['params']):

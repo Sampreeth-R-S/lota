@@ -125,6 +125,9 @@ def main(config: DictConfig):
         tokenizer.add_special_tokens({'pad_token': '<PAD>'})
         policy.config.pad_token_id = tokenizer.pad_token_id
         policy.resize_token_embeddings(len(tokenizer))
+    from safetensors.torch import load_file
+    state_dict = load_file('/raid/pabitracs/ultrafeedback_sequential_base_non_instruct_large.safetensors')
+    policy.load_state_dict(state_dict)
 
     if config.loss.name in ['dpo', 'soft_sft']:
         print('building reference model')

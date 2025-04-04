@@ -37,15 +37,17 @@ from .._buffer_dict import BufferDict
 
 class VeraLayer(BaseTunerLayer):
     # List all names of layers that may contain adapter weights
-    adapter_layer_names = ("adapter_weights",)
+    adapter_layer_names = ("adapter_weights1","adapter_weights2",)
     other_param_names = ()
 
     def __init__(self, base_layer: nn.Module, **kwargs):
         self.base_layer = base_layer
         self.r = {}
         self.vera_dropout = nn.ModuleDict({})
-        self.adapter_weights = nn.ParameterDict({})
-        self.indices = {}
+        self.adapter_weights1 = nn.ParameterDict({})
+        self.adapter_weights2 = nn.ParameterDict({})
+        self.indices1 = {}
+        self.indices2 = {}
         global global_maskA, global_maskB
         if global_maskA is None:
             global_maskA = torch.load("/home/pabitracs/Sampreeth/lota/rlaif/peft/tuners/vera/mask_tensor_A_10percent.pt").float()
@@ -89,17 +91,24 @@ class VeraLayer(BaseTunerLayer):
             vera_dropout_layer = nn.Identity()
 
         self.vera_dropout.update(nn.ModuleDict({adapter_name: vera_dropout_layer}))
-        self.indices[adapter_name] = []
+        self.indices1[adapter_name] = []
+        self.indices2[adapter_name] = []
         if self.out_features == 14336 and self.in_features == 4096:
-            indices_tensor = torch.nonzero(global_maskA[:14336, :4096], as_tuple=False)
+            indices_tensor1 = torch.nonzero(global_maskA[:14336, :4096], as_tuple=False)
+            indices_tensor2 = torch.nonzero(global_maskB[:14336, :4096], as_tuple=False)
         elif self.out_features == 4096 and self.in_features == 14336:
-            indices_tensor = torch.nonzero(global_maskA[:14336, :4096].T, as_tuple=False)
+            indices_tensor1 = torch.nonzero(global_maskA[:14336, :4096].T, as_tuple=False)
+            indices_tensor2 = torch.nonzero(global_maskB[:14336, :4096].T, as_tuple=False)
         else:
-            indices_tensor = torch.nonzero(global_maskA[:self.out_features, :self.in_features], as_tuple=False)
+            indices_tensor1 = torch.nonzero(global_maskA[:self.out_features, :self.in_features], as_tuple=False)
+            indices_tensor2 = torch.nonzero(global_maskB[:self.out_features, :self.in_features], as_tuple=False)
 
-        self.indices[adapter_name] = indices_tensor  # Store as tensor
-        self.indices[adapter_name].requires_grad=False
-        self.adapter_weights[adapter_name] = nn.Parameter(torch.zeros(indices_tensor.shape[0]), requires_grad=True)
+        self.indices1[adapter_name] = indices_tensor1  # Store as tensor
+        self.indices1[adapter_name].requires_grad=False
+        self.adapter_weights1[adapter_name] = nn.Parameter(torch.zeros(indices_tensor1.shape[0]), requires_grad=True)
+        self.indices2[adapter_name] = indices_tensor2  # Store as tensor
+        self.indices2[adapter_name].requires_grad=False
+        self.adapter_weights2[adapter_name] = nn.Parameter(torch.zeros(indices_tensor2.shape[0]), requires_grad=True)
         
         self._move_adapter_to_device_of_base_layer(adapter_name)
         self.set_adapter(self.active_adapters)
@@ -135,16 +144,16 @@ class Linear(nn.Linear, VeraLayer):
         super(nn.Linear, self).__init__()
         VeraLayer.__init__(self, base_layer, **kwargs)
         self.mask = (torch.rand((self.out_features,self.in_features)) < sparsity_ratio).float()
-        num_ones = torch.sum(self.mask == 1).item()
+        num_ones = torch.sum(global_maskA == 1).item()
         total_elements = self.mask.numel()
         percentage_ones = (num_ones / total_elements) * 100
         print(f"Percentage of 1's in the mask: {percentage_ones:.2f}%")
         self.steps = 0
         self.fan_in_fan_out = fan_in_fan_out
-        self.task = 1
+        self.task = 2
         self._active_adapter = adapter_name
         self.update_layer(adapter_name, vera_A, vera_B, r, vera_dropout, init_weights, d_initial=d_initial)
-        print(self.adapter_weights[adapter_name].requires_grad)
+        # print(self.adapter_weights1[adapter_name].requires_grad)
         self.is_target_conv_1d_layer = is_target_conv_1d_layer
         
         
@@ -238,23 +247,22 @@ class Linear(nn.Linear, VeraLayer):
             result = self.base_layer(x, *args, **kwargs)
             
             for active_adapter in self.active_adapters:
-                if active_adapter not in self.adapter_weights.keys():
+                if active_adapter not in self.adapter_weights1.keys():
                     continue
                     
-                temp_weight = torch.zeros((self.out_features, self.in_features), device=x.device)
-                indices = self.indices[active_adapter].to(x.device)
-                temp_weight[indices[:, 0], indices[:, 1]] = self.adapter_weights[active_adapter]
+                
                 
                 if self.task == 1:
+                    temp_weight = torch.zeros((self.out_features, self.in_features), device=x.device)
+                    indices = self.indices1[active_adapter].to(x.device)
+                    temp_weight[indices[:, 0], indices[:, 1]] = self.adapter_weights1[active_adapter]
                     result += F.linear(x, temp_weight.to(x.dtype), bias=None)
                 else:
                     # Ensure global mask is on the correct device
-                    global_maskA_device = global_maskA.to(device)
-                    result += F.linear(
-                        x,
-                        (adapter_weights * global_maskA_device).to(x.dtype),
-                        bias=None
-                    )
+                    temp_weight = torch.zeros((self.out_features, self.in_features), device=x.device)
+                    indices = self.indices2[active_adapter].to(x.device)
+                    temp_weight[indices[:, 0], indices[:, 1]] = self.adapter_weights2[active_adapter]
+                    result += F.linear(x, temp_weight.to(x.dtype), bias=None)
         
         result = result.to(previous_dtype)
         return result
